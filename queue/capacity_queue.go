@@ -8,23 +8,28 @@ import (
 )
 
 type CapacityQueue[T any] interface {
-	Enqueue(T) (Queue[T], error)
-	Dequeue() (Queue[T], error)
+	Enqueue(T) (CapacityQueue[T], error)
+	Dequeue() (CapacityQueue[T], error)
 	Peek() (T, error)
 	IsEmpty() bool
 	Length() uint
+	IsFull() bool
 	Capacity() uint
 }
+
+var _ CapacityQueue[int] = (*EmptyCapacityQueue[int])(nil)
+var _ CapacityQueue[int] = (*NonFullQueue[int])(nil)
+var _ CapacityQueue[int] = (*FullQueue[int])(nil)
 
 type EmptyCapacityQueue[T any] struct {
 	capacity uint
 }
 
-func NewCapacityQueue[T any](capacity uint) Queue[T] {
+func NewCapacityQueue[T any](capacity uint) CapacityQueue[T] {
 	return EmptyCapacityQueue[T]{capacity: capacity}
 }
 
-func (q EmptyCapacityQueue[T]) Enqueue(t T) (Queue[T], error) {
+func (q EmptyCapacityQueue[T]) Enqueue(t T) (CapacityQueue[T], error) {
 	return NonFullQueue[T]{
 		capacity:  q.capacity,
 		forwards:  stack.NewStack[T]().Push(t),
@@ -32,7 +37,7 @@ func (q EmptyCapacityQueue[T]) Enqueue(t T) (Queue[T], error) {
 	}, nil
 }
 
-func (q EmptyCapacityQueue[T]) Dequeue() (Queue[T], error) {
+func (q EmptyCapacityQueue[T]) Dequeue() (CapacityQueue[T], error) {
 	return nil, errors.New("cannot dequeue an empty queue")
 }
 
@@ -49,6 +54,10 @@ func (q EmptyCapacityQueue[T]) Length() uint {
 	return 0
 }
 
+func (q EmptyCapacityQueue[T]) IsFull() bool {
+	return false
+}
+
 func (q EmptyCapacityQueue[T]) Capacity() uint {
 	return q.capacity
 }
@@ -62,7 +71,7 @@ type NonFullQueue[T any] struct {
 	forwards, backwards stack.Stack[T]
 }
 
-func (q NonFullQueue[T]) Enqueue(t T) (Queue[T], error) {
+func (q NonFullQueue[T]) Enqueue(t T) (CapacityQueue[T], error) {
 	if q.Length() < q.capacity-1 {
 		return NonFullQueue[T]{
 			capacity:  q.capacity,
@@ -78,7 +87,7 @@ func (q NonFullQueue[T]) Enqueue(t T) (Queue[T], error) {
 	}, nil
 }
 
-func (q NonFullQueue[T]) Dequeue() (Queue[T], error) {
+func (q NonFullQueue[T]) Dequeue() (CapacityQueue[T], error) {
 	f, err := q.forwards.Pop()
 
 	if !f.IsEmpty() {
@@ -112,6 +121,10 @@ func (q NonFullQueue[T]) Length() uint {
 	return q.forwards.Depth() + q.backwards.Depth()
 }
 
+func (q NonFullQueue[T]) IsFull() bool {
+	return true
+}
+
 func (q NonFullQueue[T]) Capacity() uint {
 	return q.capacity
 }
@@ -125,11 +138,11 @@ type FullQueue[T any] struct {
 	forwards, backwards stack.Stack[T]
 }
 
-func (q FullQueue[T]) Enqueue(t T) (Queue[T], error) {
+func (q FullQueue[T]) Enqueue(t T) (CapacityQueue[T], error) {
 	return q, errors.New("cannot enqueue at full capacity")
 }
 
-func (q FullQueue[T]) Dequeue() (Queue[T], error) {
+func (q FullQueue[T]) Dequeue() (CapacityQueue[T], error) {
 	f, err := q.forwards.Pop()
 
 	if !f.IsEmpty() {
@@ -161,6 +174,10 @@ func (q FullQueue[T]) IsEmpty() bool {
 
 func (q FullQueue[T]) Length() uint {
 	return q.forwards.Depth()
+}
+
+func (q FullQueue[T]) IsFull() bool {
+	return true
 }
 
 func (q FullQueue[T]) Capacity() uint {

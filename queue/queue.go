@@ -15,7 +15,10 @@ type Queue[T any] interface {
 	Length() uint
 }
 
-type EmptyQueue[T any] struct { }
+var _ Queue[int] = (*EmptyQueue[int])(nil)
+var _ Queue[int] = (*NonEmptyQueue[int])(nil)
+
+type EmptyQueue[T any] struct{}
 
 func NewQueue[T any]() Queue[T] {
 	return EmptyQueue[T]{}
@@ -54,10 +57,10 @@ type NonEmptyQueue[T any] struct {
 }
 
 func (q NonEmptyQueue[T]) Enqueue(t T) (Queue[T], error) {
-		return NonEmptyQueue[T]{
-			forwards:  q.forwards,
-			backwards: q.backwards.Push(t),
-		}, nil
+	return NonEmptyQueue[T]{
+		forwards:  q.forwards,
+		backwards: q.backwards.Push(t),
+	}, nil
 }
 
 func (q NonEmptyQueue[T]) Dequeue() (Queue[T], error) {
