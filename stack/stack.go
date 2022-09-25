@@ -2,6 +2,7 @@ package stack
 
 import (
 	"errors"
+	"fmt"
 )
 
 // Stack is an immutable implementation of a generic stack.
@@ -21,6 +22,12 @@ type Stack[T any] interface {
 
 	// Depth returns the depth of the stack.
 	Depth() uint
+
+	// IsEmpty returns true if the stack is empty, false if it's non-empty.
+	IsEmpty() bool
+
+	// Reverse the stack
+	Reverse() Stack[T]
 }
 
 // EmptyStack is an empty stack.
@@ -31,24 +38,36 @@ func NewStack[T any]() Stack[T] {
 	return EmptyStack[T]{}
 }
 
-func (e EmptyStack[T]) Push(t T) Stack[T] {
+func (s EmptyStack[T]) Push(t T) Stack[T] {
 	return NonEmptyStack[T]{
 		topEl: t,
-		tail:  e,
+		tail:  s,
 	}
 }
 
-func (e EmptyStack[T]) Pop() (Stack[T], error) {
-	return e, errors.New("cannot pop empty stack")
+func (s EmptyStack[T]) Pop() (Stack[T], error) {
+	return s, errors.New("cannot pop empty stack")
 }
 
-func (e EmptyStack[T]) Top() (T, error) {
+func (s EmptyStack[T]) Top() (T, error) {
 	var noop T
 	return noop, errors.New("cannot top on empty stack")
 }
 
-func (e EmptyStack[T]) Depth() uint {
+func (s EmptyStack[T]) Depth() uint {
 	return 0
+}
+
+func (s EmptyStack[T]) IsEmpty() bool {
+	return true
+}
+
+func (s EmptyStack[T]) Reverse() Stack[T] {
+	return s
+}
+
+func (s EmptyStack[T]) String() string {
+	return "nil"
 }
 
 // NonEmptyStack is a non-empty stack.
@@ -66,21 +85,41 @@ func NewNonEmptyStack[T any](top T, previous Stack[T]) Stack[T] {
 	}
 }
 
-func (e NonEmptyStack[T]) Push(t T) Stack[T] {
+func (s NonEmptyStack[T]) Push(t T) Stack[T] {
 	return NonEmptyStack[T]{
 		topEl: t,
-		tail:  e,
+		tail:  s,
 	}
 }
 
-func (e NonEmptyStack[T]) Pop() (Stack[T], error) {
-	return e.tail, nil
+func (s NonEmptyStack[T]) Pop() (Stack[T], error) {
+	return s.tail, nil
 }
 
-func (e NonEmptyStack[T]) Top() (T, error) {
-	return e.topEl, nil
+func (s NonEmptyStack[T]) Top() (T, error) {
+	return s.topEl, nil
 }
 
-func (e NonEmptyStack[T]) Depth() uint {
-	return 1 + e.tail.Depth()
+func (s NonEmptyStack[T]) Depth() uint {
+	return 1 + s.tail.Depth()
+}
+
+func (s NonEmptyStack[T]) IsEmpty() bool {
+	return false
+}
+
+func (s NonEmptyStack[T]) Reverse() Stack[T] {
+	r := NewStack[T]()
+	var cur Stack[T] = s
+	for !cur.IsEmpty() {
+		t, _ := cur.Top()
+		r = r.Push(t)
+		cur, _ = cur.Pop()
+	}
+	return r
+}
+
+func (s NonEmptyStack[T]) String() string {
+	t, _ := s.Top()
+	return fmt.Sprintf("%v, %v", t, s.tail)
 }

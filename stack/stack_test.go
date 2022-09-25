@@ -38,6 +38,8 @@ func TestStack(t *testing.T) {
 		t.Errorf("wanted 666, got: %d", top)
 	}
 
+	fmt.Println(s1)
+
 	ps, err := s1.Pop()
 	if err != nil {
 		t.Errorf("wanted nil, got: %v", err)
@@ -84,5 +86,29 @@ func TestReferences(t *testing.T) {
 	_, err = ps1.Pop()
 	if err == nil {
 		t.Error("popping empty stack should result in err")
+	}
+}
+
+func TestReverse(t *testing.T) {
+	s := stack.NewStack[rune]()
+	fwd := "Hello, World!"
+	for _, r := range fwd {
+		s = s.Push(r)
+	}
+
+	s = s.Reverse()
+	for _, r := range fwd {
+		val, err := s.Top()
+		if err != nil {
+			t.Errorf("wanted nil, got: %v", err)
+		}
+		if val != r {
+			t.Errorf("wanted %c, got: %c", r, val)
+		}
+
+		s, err = s.Pop()
+		if err != nil {
+			t.Errorf("wanted nil, got: %v", err)
+		}
 	}
 }
